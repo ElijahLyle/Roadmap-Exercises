@@ -1,0 +1,78 @@
+Which are the 10 best-selling tracks?
+
+Requirements: List 10 best-selling tracks
+InvoiceLine -> TrackId, UnitPrice, Quantity
+GROUP BY TrackId
+
+Output: Track.Name
+
+Query:
+WITH TrackSales AS (
+    SELECT
+        il.TrackId,
+        SUM(il.UnitPrice * il.Quantity) AS TotalSales
+    FROM InvoiceLine AS il
+    GROUP BY il.TrackId
+)
+
+SELECT
+    t.Name,
+    ts.TotalSales
+FROM TrackSales AS ts
+INNER JOIN Track AS t ON ts.TrackId = t.TrackId
+ORDER BY ts.TotalSales DESC
+LIMIT 10;
+
+Which country generates the most revenue?
+Requirements: Identify the country with the highest revenue
+Invoice -> Group by CustomerId, SUM of total
+
+Output: Customer.Country
+
+WITH CustomerRevenue AS (
+    SELECT
+        i.CustomerId,
+        SUM(i.Total) AS TotalRevenue
+    FROM Invoice AS i
+    GROUP BY i.CustomerId
+)
+
+SELECT
+    c.Country
+FROM CustomerRevenue AS cr
+INNER JOIN Customer AS c 
+    ON cr.CustomerId = c.CustomerId
+GROUP BY c.Country
+ORDER BY SUM(cr.TotalRevenue) DESC
+LIMIT 1;
+
+Who is the top-performing sales employee?
+Requirements: Identify the employee with the highest sales
+Invoice Total -> Customer.SupportRepId -> Employee
+
+Output: Employee.FirstName, Employee.LastName
+
+Query:
+WITH CustomerRevenue AS (
+    SELECT
+        i.CustomerId,
+        SUM(i.Total) AS TotalRevenue
+    FROM Invoice AS i
+    GROUP BY i.CustomerId
+),
+EmployeeCustomerRevenue AS (
+    SELECT
+        c.SupportRepId,
+        SUM(cr.TotalRevenue) AS TotalSales
+    FROM CustomerRevenue AS cr
+    INNER JOIN Customer AS c ON cr.CustomerId = c.CustomerId
+    GROUP BY c.SupportRepId
+)
+
+SELECT
+    e.FirstName,
+    e.LastName
+FROM EmployeeCustomerRevenue AS ecr
+INNER JOIN Employee AS e ON ecr.SupportRepId = e.EmployeeId
+ORDER BY ecr.TotalSales DESC
+LIMIT 1;
